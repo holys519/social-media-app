@@ -46,7 +46,7 @@ const login = () => {
                     onChangeText={(value: string) => emailRef.current = value}
                 />
                 <Input
-                    icon={<Icon name='mail' size={26} strokeWidth={1.6}/>}
+                    icon={<Icon name='lock' size={26} strokeWidth={1.6}/>}
                     placeholder="Enter your password"
                     secureTextEntry
                     onChangeText={(value: string) => passwordRef.current = value}
