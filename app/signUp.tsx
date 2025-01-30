@@ -27,7 +27,6 @@ const SignUp = () => {
         let name = nameRef.current.trim();
         let email = emailRef.current.trim();
         let password = passwordRef.current.trim();
-
         setLoading(true);
 
         const { data: {session}, error} = await supabase.auth.signUp({
@@ -42,8 +41,8 @@ const SignUp = () => {
 
         setLoading(false);
 
-        console.log("session: ", session);
-        console.log("error: ", error);
+        // console.log("session: ", session);
+        // console.log("error: ", error);
         if(error){
             Alert.alert("Sign Up", error.message);
         }
