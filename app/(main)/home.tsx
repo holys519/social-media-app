@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, Button } from 'react-native'
+import { StyleSheet, Text, View, Button, Pressable } from 'react-native'
 import React from 'react'
 import ScreenWrapper from '../../components/ScreenWrapper'
 import { useAuth } from '../../contexts/AuthContext'
@@ -6,13 +6,17 @@ import { supabase } from '../../lib/supabase'
 import { Alert } from 'react-native'
 import { wp, hp } from '@/helpers/common'
 import { theme } from '@/constants/theme'
+import Icon from '@/assets/icons'
+import { useRouter } from 'expo-router'
+import Avatar from '@/components/Avatar'
 
 const Home = () => {
     const authContext = useAuth();
     if (!authContext) {
         return null;
     }
-    const { setAuth } = authContext;
+    const { user, setAuth } = authContext;
+    const router = useRouter();
 
     const onLogin = async () => {
         // setAuth(null);
@@ -23,7 +27,27 @@ const Home = () => {
         console.log("login");
     }
   return (
-    <ScreenWrapper bg={''}>
+    <ScreenWrapper bg={'white'}>
+        <View style={styles.container}>
+            <View style={styles.header}>
+                <Text style={styles.title}>LinkUp</Text>
+                <View style={styles.icons}>
+                    <Pressable onPress={() => router.push('./notifications')}>
+                        <Icon name="heart" size={hp(3.2)} strokeWidth={2} color={theme.colors.text} />
+                    </Pressable>
+                    <Pressable onPress={() => router.push('./newPost')}>
+                        <Icon name="plus" size={hp(3.2)} strokeWidth={2} color={theme.colors.text} />
+                    </Pressable>
+                    <Pressable onPress={() => router.push('./profile')}>
+                        <Avatar
+                        uri={user?.image}
+                        size={hp(4.3)}
+                        rounded={Number(theme.radius.sm)}
+                        style={{borderWidth: 2}} />
+                    </Pressable>
+                </View>
+            </View>
+        </View>
       <Text>Home</Text>
       <Button title="login" onPress={onLogin}/>
     </ScreenWrapper>

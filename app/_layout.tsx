@@ -4,7 +4,7 @@ import { Stack } from 'expo-router'
 import { AuthProvider, useAuth } from '@/contexts/AuthContext'
 import { supabase } from '../lib/supabase'
 import { useRouter } from 'expo-router'
-import { getUserData } from '../services/userServies'
+import { getUserData } from '../services/userService'
 
 const _layout = () => {
   return (
