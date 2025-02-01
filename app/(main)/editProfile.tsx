@@ -43,6 +43,13 @@ const EditProfile = () => {
     address: "",
   });
 
+  console.log("user", user?.image);
+  let imageSource = user.image
+    ? typeof user.image === "object"
+      ? getUserImageSrc(user.image.uri)
+      : getUserImageSrc(user.image)
+    : null;
+
   useEffect(() => {
     if (currentUser) {
       setUser({
@@ -83,6 +90,7 @@ const EditProfile = () => {
         // imageRes.data は string と仮定
         userData.image = { uri: imageRes.data };
       } else {
+        console.log("ここを通っている？");
         userData.image = null;
       }
     }
@@ -96,11 +104,6 @@ const EditProfile = () => {
     }
     // console.log("update user result: ", res);
   };
-
-  let imageSource =
-    user.image && typeof user.image === "object"
-      ? { uri: user.image.uri }
-      : getUserImageSrc(user.image || "");
 
   return (
     <ScreenWrapper bg="white">
@@ -168,7 +171,7 @@ const styles = StyleSheet.create({
   avatar: {
     width: "100%",
     height: "100%",
-    borderRadius: Number(theme.radius.xxl) * 1.8,
+    borderRadius: Number(theme.radius.xxl) * 1.4,
     borderCurve: "continuous",
     borderWidth: 1,
     borderColor: theme.colors.darkLight,
