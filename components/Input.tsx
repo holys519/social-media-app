@@ -1,9 +1,9 @@
-import { StyleSheet, Text, TextInput, View } from 'react-native'
-import React from 'react'
-import { theme } from '@/constants/theme'
-import { hp, wp } from '@/helpers/common'
+import { StyleSheet, Text, TextInput, View } from "react-native";
+import React from "react";
+import { theme } from "@/constants/theme";
+import { hp, wp } from "@/helpers/common";
 
-import { TextInputProps } from 'react-native'
+import { TextInputProps } from "react-native";
 
 interface InputProps extends TextInputProps {
   containerStyle?: object;
@@ -12,31 +12,33 @@ interface InputProps extends TextInputProps {
 }
 
 const Input = (props: InputProps) => {
-  const { icon, containerStyle, inputRef, ...rest } = props;
+  // const { icon, containerStyle, inputRef, ...rest } = props;
   return (
-    <View style={[styles.container, containerStyle]}>
-      {icon && <View style={styles.iconContainer}>{icon}</View>}
+    <View
+      style={[styles.container, props.containerStyle && props.containerStyle]}
+    >
+      {props.icon && props.icon}
       <TextInput
-        style={styles.textInput}
+        style={{ flex: 1 }}
         placeholderTextColor={theme.colors.textLight}
-        ref={inputRef}
-        {...rest}
+        ref={props.inputRef && props.inputRef}
+        {...props}
       />
     </View>
-  )
-}
+  );
+};
 
-export default Input
+export default Input;
 
 const styles = StyleSheet.create({
   container: {
-    flexDirection: 'row',
+    flexDirection: "row",
     height: hp(7.2),
-    alignItems: 'center',
+    alignItems: "center",
     borderWidth: 0.4,
     borderColor: theme.colors.text,
     borderRadius: theme.radius.xxl,
-    borderCurve: 'continuous',
+    borderCurve: "continuous",
     paddingHorizontal: 18,
     gap: 12,
   },
@@ -46,4 +48,4 @@ const styles = StyleSheet.create({
   textInput: {
     flex: 1,
   },
-})
+});

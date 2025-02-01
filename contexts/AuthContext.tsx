@@ -1,29 +1,33 @@
-import { createContext, useState, useContext } from 'react';
+import { createContext, useContext, useState, ReactNode } from "react";
+
+interface User {
+  email?: string;
+  [key: string]: any;
+}
 
 const AuthContext = createContext<{
-    user: any;
-    setAuth: (authUser: any) => void;
-    setUserData: (userData: any) => void;
+  user: User | null;
+  setAuth: (authUser: User) => void;
+  setUserData: (userData: User) => void;
 } | null>(null);
 
-import { ReactNode } from 'react';
-
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-    const [user, setUser] = useState(null);
+  const [user, setUser] = useState<User | null>(null);
 
-    const setAuth = (authUser: any) => {
-        setUser(authUser);
-    }
+  const setAuth = (authUser: User) => {
+    setUser(authUser);
+  };
 
-    const setUserData = (userData: any) => {
-        setUser({...userData});
-    }
+  const setUserData = (userData: User) => {
+    // console.log("old user: ", user?.email);
+    setUser({ ...userData });
+  };
 
-    return (
-        <AuthContext.Provider value={{user, setAuth, setUserData}}>
-            {children}
-        </AuthContext.Provider>
-    );
+  return (
+    <AuthContext.Provider value={{ user, setAuth, setUserData }}>
+      {children}
+    </AuthContext.Provider>
+  );
 };
 
 export const useAuth = () => useContext(AuthContext);
