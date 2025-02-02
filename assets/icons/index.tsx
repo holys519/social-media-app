@@ -17,6 +17,7 @@ import Send from "./Send";
 import Share from "./Share";
 import User from "./User";
 import Logout from "./logout";
+import Video from "./Video";
 
 const icons = {
   home: Home,
@@ -37,6 +38,7 @@ const icons = {
   send: Send,
   share: Share,
   user: User,
+  video: Video,
 };
 type IconProps = {
   name: keyof typeof icons;
