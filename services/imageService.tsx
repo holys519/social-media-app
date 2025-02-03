@@ -7,6 +7,7 @@ export const getUserImageSrc = (imagePath: string) => {
   if (imagePath) {
     return getSupabaseFileUrl(imagePath);
   } else {
+    console.log("default png icon: ");
     return require("../assets/images/defaultUser.png");
   }
 };
@@ -43,6 +44,7 @@ export const uploadFile = async (
       return { success: false, msg: "could not upload media" };
     }
 
+    console.log("data imageServer: ", data);
     return { success: true, data: data?.path || null };
   } catch (error) {
     console.log("file upload error: ", error);

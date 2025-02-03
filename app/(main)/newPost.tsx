@@ -1,10 +1,12 @@
 import {
+  Image,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
+  Alert,
 } from "react-native";
 import React, { useRef, useState } from "react";
 import ScreenWrapper from "@/components/ScreenWrapper";
@@ -18,8 +20,8 @@ import { useRouter } from "expo-router";
 import Icon from "@/assets/icons";
 import Button from "@/components/Button";
 import * as ImagePicker from "expo-image-picker";
-import { Image } from "react-native";
 import { getSupabaseFileUrl } from "@/services/imageService";
+import { createOrUpdatePost } from "@/services/postService"; // Add this line
 import { Video, ResizeMode } from "expo-av";
 
 const NewPost = () => {
@@ -78,7 +80,20 @@ const NewPost = () => {
     return remoteUri && remoteUri.endsWith(".mp4") ? remoteUri : null;
   };
 
-  const onSubmit = async () => {};
+  const onSubmit = async () => {
+    if (!bodyRef.current && !file) {
+      Alert.alert("Post", "Please choose an image or add post body");
+      return;
+    }
+
+    let data = {
+      file,
+      body: bodyRef.current,
+      userId: user?.id,
+    };
+    setLoading(true);
+    let res = await createOrUpdatePost(data);
+  };
 
   return (
     <ScreenWrapper bg="white">
@@ -112,7 +127,7 @@ const NewPost = () => {
                   style={{ flex: 1 }}
                   source={{ uri: getFileUri(file) }}
                   useNativeControls
-                  // resizeMode={ResizeMode.COVER}
+                  resizeMode={ResizeMode.COVER}
                   isLooping
                 />
               ) : (

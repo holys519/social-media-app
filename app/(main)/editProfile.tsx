@@ -43,13 +43,6 @@ const EditProfile = () => {
     address: "",
   });
 
-  console.log("user", user?.image);
-  let imageSource = user.image
-    ? typeof user.image === "object"
-      ? getUserImageSrc(user.image.uri)
-      : getUserImageSrc(user.image)
-    : null;
-
   useEffect(() => {
     if (currentUser) {
       setUser({
@@ -64,7 +57,7 @@ const EditProfile = () => {
 
   const onPickImage = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ["images", "videos"],
+      mediaTypes: ImagePicker.MediaTypeOptions.All,
       allowsEditing: true,
       aspect: [4, 3],
       quality: 0.7,
@@ -72,6 +65,8 @@ const EditProfile = () => {
     if (!result.canceled) {
       setUser({ ...user, image: result.assets[0] });
     }
+
+    console.log("result editProfile: ", result);
   };
 
   const onSubmit = async () => {
@@ -105,6 +100,20 @@ const EditProfile = () => {
     // console.log("update user result: ", res);
   };
 
+  console.log("user", user?.image);
+  let parsedImageUri = "";
+  if (typeof user.image === "string") {
+    try {
+      const parsed = JSON.parse(user.image);
+      parsedImageUri = parsed.uri || "";
+    } catch (error) {
+      parsedImageUri = user.image;
+    }
+  } else if (typeof user.image === "object" && user.image !== null) {
+    parsedImageUri = user.image.uri;
+  }
+  const imageSource = parsedImageUri ? getUserImageSrc(parsedImageUri) : null;
+
   return (
     <ScreenWrapper bg="white">
       <View style={styles.container}>
@@ -114,7 +123,11 @@ const EditProfile = () => {
           {/* form */}
           <View style={styles.container}>
             <View style={styles.avataerContainer}>
-              <Image source={imageSource} style={styles.avatar} />
+              <Image
+                source={imageSource}
+                style={styles.avatar}
+                cachePolicy={"none"}
+              />
               <Pressable style={styles.cameraIcon} onPress={onPickImage}>
                 <Icon name="camera" size={20} strokeWidth={2.5} />
               </Pressable>

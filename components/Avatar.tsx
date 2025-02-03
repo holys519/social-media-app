@@ -19,8 +19,20 @@ const Avatar: React.FC<AvatarProps> = ({
   style = {},
 }) => {
   console.log("uri log: ", uri);
-  const imagePath =
-    typeof uri === "object" && uri !== null ? uri.uri : uri || "";
+  let imagePath = "";
+  if (typeof uri === "string") {
+    try {
+      // JSON文字列としてパースを試みる
+      const parsed = JSON.parse(uri);
+      imagePath = parsed.uri || "";
+    } catch (error) {
+      // パースできなければそのまま利用
+      imagePath = uri;
+    }
+  } else if (typeof uri === "object" && uri !== null) {
+    imagePath = uri.uri;
+  }
+  console.log("imagePath", imagePath);
   return (
     <Image
       source={getUserImageSrc(imagePath)}
