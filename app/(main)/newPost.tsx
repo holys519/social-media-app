@@ -1,4 +1,5 @@
 import {
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -19,6 +20,7 @@ import Button from "@/components/Button";
 import * as ImagePicker from "expo-image-picker";
 import { Image } from "react-native";
 import { getSupabaseFileUrl } from "@/services/imageService";
+import { Video, ResizeMode } from "expo-av";
 
 const NewPost = () => {
   const authContext = useAuth();
@@ -46,36 +48,34 @@ const NewPost = () => {
     }
     let result = await ImagePicker.launchImageLibraryAsync(mediaConfig);
 
-    console.log("file: ", result.assets[0]);
-    if (!result.canceled) {
+    if (!result.canceled && result.assets) {
+      console.log("file: ", result.assets[0]);
       setFile(result.assets[0]);
     }
   };
 
-  const isLocalFile = (file) => {
-    if (!file) return null;
-    if (typeof file == "object") return true;
+  const isLocalFile = (file: any): boolean => {
+    return file && typeof file === "object" && "uri" in file && "type" in file;
   };
 
-  const getFileType = (file) => {
+  const getFileType = (file: any): string | null => {
     if (!file) return null;
     if (isLocalFile(file)) {
-      return file.type;
+      return file.type?.startsWith("video") ? "video" : "image";
     }
-    // check image or video for remote file
-    if (file.includes("postImage")) {
-      return "image";
-    }
-    return "video";
+    return file?.includes("postVideo") ? "video" : "image";
   };
 
-  const getFileUri = (file) => {
+  console.log("File Type:", getFileType(file));
+
+  const getFileUri = (file: any) => {
     if (!file) return null;
-    if (isLocalFile(false)) {
+    if (isLocalFile(file)) {
       return file.uri;
     }
 
-    return getSupabaseFileUrl(file)?.uri;
+    const remoteUri = getSupabaseFileUrl(file)?.uri;
+    return remoteUri && remoteUri.endsWith(".mp4") ? remoteUri : null;
   };
 
   const onSubmit = async () => {};
@@ -108,14 +108,23 @@ const NewPost = () => {
           {file && (
             <View style={styles.file}>
               {getFileType(file) == "video" ? (
-                <></>
+                <Video
+                  style={{ flex: 1 }}
+                  source={{ uri: getFileUri(file) }}
+                  useNativeControls
+                  // resizeMode={ResizeMode.COVER}
+                  isLooping
+                />
               ) : (
                 <Image
                   source={{ uri: getFileUri(file) }}
                   resizeMode="cover"
-                  style={{ flex: 1 }}
+                  style={[styles.fileImage]}
                 />
               )}
+              <Pressable style={styles.closeIcon} onPress={() => setFile(null)}>
+                <Icon name="delete" size={22} color="white" />
+              </Pressable>
             </View>
           )}
           <View style={styles.media}>
@@ -201,11 +210,28 @@ const styles = StyleSheet.create({
     width: "100%",
     borderRadius: theme.radius.xl,
     overflow: "hidden",
+    borderCurve: "continuous",
   },
   viewo: {},
   closeIcon: {
     position: "absolute",
     top: 10,
     right: 10,
+    padding: 5,
+    borderRadius: 50,
+    backgroundColor: "rgba(255,0,0,0.6)",
+  },
+  fileImage: {
+    flex: 1,
+    borderRadius: theme.radius.xl,
+  },
+  richEditor: {
+    borderRadius: theme.radius.xl,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: theme.colors.gray,
+  },
+  richEditorContent: {
+    borderRadius: theme.radius.xl,
   },
 });
