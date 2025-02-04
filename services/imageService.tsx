@@ -22,8 +22,8 @@ export const getSupabaseFileUrl = (filePath: string) => {
 };
 
 export const uploadFile = async (
-  folderName: any,
-  fileUri: any,
+  folderName: string,
+  fileUri: string,
   isImage = true
 ) => {
   try {

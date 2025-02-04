@@ -21,7 +21,7 @@ import Icon from "@/assets/icons";
 import Button from "@/components/Button";
 import * as ImagePicker from "expo-image-picker";
 import { getSupabaseFileUrl } from "@/services/imageService";
-import { createOrUpdatePost } from "@/services/postService"; // Add this line
+import createOrUpdatePost from "../..//services/postService"; // Add this line
 import { Video, ResizeMode } from "expo-av";
 
 const NewPost = () => {
@@ -93,7 +93,10 @@ const NewPost = () => {
     };
     setLoading(true);
     let res = await createOrUpdatePost(data);
+    setLoading(false);
+    console.log("post res: ", res);
   };
+  console.log("file uri: ", getFileUri(file));
 
   return (
     <ScreenWrapper bg="white">
