@@ -39,8 +39,10 @@ export const uploadFile = async (
         upsert: false,
         contentType: isImage ? "image/*" : "video/*",
       });
+    console.log("upload data: ", data);
     if (error) {
       console.log("file upload error: ", error);
+      console.log("file upload error data: ", data);
       return { success: false, msg: "could not upload media" };
     }
 

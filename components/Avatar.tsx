@@ -18,7 +18,6 @@ const Avatar: React.FC<AvatarProps> = ({
   rounded = Number(theme.radius.md),
   style = {},
 }) => {
-  console.log("uri log: ", uri);
   let imagePath = "";
   if (typeof uri === "string") {
     try {
@@ -32,7 +31,6 @@ const Avatar: React.FC<AvatarProps> = ({
   } else if (typeof uri === "object" && uri !== null) {
     imagePath = uri.uri;
   }
-  console.log("imagePath", imagePath);
   return (
     <Image
       source={getUserImageSrc(imagePath)}

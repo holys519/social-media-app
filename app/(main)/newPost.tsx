@@ -22,29 +22,41 @@ import Button from "@/components/Button";
 import * as ImagePicker from "expo-image-picker";
 import { getSupabaseFileUrl } from "@/services/imageService";
 import createOrUpdatePost from "../..//services/postService"; // Add this line
-import { Video, ResizeMode } from "expo-av";
+import { useVideoPlayer, VideoView, VideoPlayer } from "expo-video";
+import * as FileSystem from "expo-file-system";
 
 const NewPost = () => {
   const authContext = useAuth();
   const user = authContext ? authContext.user : null;
   const bodyRef = useRef("");
-  const editorRef = useRef(null);
+  const editorRef = useRef<{ setContentHTML: (html: string) => void } | null>(
+    null
+  );
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [file, setFile] = useState<ImagePicker.ImagePickerAsset | null>(null);
-
+  const [videoSource, setVideoSource] = useState<string | null>(null);
+  const player = useVideoPlayer(
+    {
+      uri: videoSource ?? "",
+    },
+    (player) => {
+      player.loop = true;
+      player.play();
+    }
+  );
   const onPick = async (isImage: boolean) => {
     let mediaConfig: ImagePicker.ImagePickerOptions = {
-      mediaTypes: ["images"],
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [4, 3] as [number, number],
       quality: 0.7,
     };
     if (!isImage) {
       mediaConfig = {
-        mediaTypes: ["videos"],
-        allowsEditing: true,
-        aspect: [4, 3] as [number, number],
+        mediaTypes: ImagePicker.MediaTypeOptions.Videos,
+        // allowsEditing: true,
+        aspect: [4, 3],
         quality: 0.7,
       };
     }
@@ -53,7 +65,12 @@ const NewPost = () => {
     if (!result.canceled && result.assets) {
       console.log("file: ", result.assets[0]);
       setFile(result.assets[0]);
+      if (!isImage) {
+        const pickedUri = result.assets[0].uri;
+        setVideoSource(pickedUri);
+      }
     }
+    console.log("result 動画: ", result);
   };
 
   const isLocalFile = (file: any): boolean => {
@@ -77,6 +94,7 @@ const NewPost = () => {
     }
 
     const remoteUri = getSupabaseFileUrl(file)?.uri;
+    console.log("remote uri: ", remoteUri);
     return remoteUri && remoteUri.endsWith(".mp4") ? remoteUri : null;
   };
 
@@ -92,9 +110,19 @@ const NewPost = () => {
       userId: user?.id,
     };
     setLoading(true);
+    console.log("submit data.file: ", data.file);
+
     let res = await createOrUpdatePost(data);
+    console.log("submit res: ", res);
     setLoading(false);
-    console.log("post res: ", res);
+    if (res.success) {
+      setFile(null);
+      bodyRef.current = "";
+      editorRef.current?.setContentHTML("");
+      router.back();
+    } else {
+      Alert.alert("Post", "msg" in res ? res.msg : "An error occurred");
+    }
   };
   console.log("file uri: ", getFileUri(file));
 
@@ -126,12 +154,18 @@ const NewPost = () => {
           {file && (
             <View style={styles.file}>
               {getFileType(file) == "video" ? (
-                <Video
+                // <Video
+                //   style={{ flex: 1 }}
+                //   source={{ uri: getFileUri(file) }}
+                //   useNativeControls
+                //   resizeMode={ResizeMode.COVER}
+                //   isLooping
+                // />
+                <VideoView
                   style={{ flex: 1 }}
-                  source={{ uri: getFileUri(file) }}
-                  useNativeControls
-                  resizeMode={ResizeMode.COVER}
-                  isLooping
+                  player={player}
+                  allowsFullscreen
+                  allowsPictureInPicture
                 />
               ) : (
                 <Image
