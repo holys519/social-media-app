@@ -21,7 +21,7 @@ import Icon from "@/assets/icons";
 import Button from "@/components/Button";
 import * as ImagePicker from "expo-image-picker";
 import { getSupabaseFileUrl } from "@/services/imageService";
-import createOrUpdatePost from "../..//services/postService"; // Add this line
+import { createOrUpdatePost } from "../..//services/postService"; // Add this line
 import { useVideoPlayer, VideoView, VideoPlayer } from "expo-video";
 import * as FileSystem from "expo-file-system";
 

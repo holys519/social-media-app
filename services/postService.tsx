@@ -1,7 +1,7 @@
 import { supabase } from "@/lib/supabase";
 import { uploadFile } from "./imageService";
 
-const createOrUpdatePost = async (post: any) => {
+export const createOrUpdatePost = async (post: any) => {
   try {
     if (post.file && typeof post.file == "object") {
       let isImage = post?.file?.type == "image";
@@ -30,6 +30,27 @@ const createOrUpdatePost = async (post: any) => {
   }
 };
 
-export default createOrUpdatePost;
+export const fetchPosts = async (limit = 10) => {
+  try {
+    const { data, error } = await supabase
+      .from("posts")
+      .select(
+        `
+        *,
+        user: users (id, name, image)
+        `
+      )
+      .order("created_at", { ascending: false })
+      .limit(limit);
 
-// const styles = StyleSheet.create({});
+    if (error) {
+      console.log("fetchPosts error: ", error);
+      return { success: false, msg: "Could not fetch the posts" };
+    }
+
+    return { success: true, data: data };
+  } catch (error) {
+    console.log("fetchPosts error: ", error);
+    return { success: false, msg: "Could not fetch the posts" };
+  }
+};

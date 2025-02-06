@@ -18,6 +18,7 @@ import Share from "./Share";
 import User from "./User";
 import Logout from "./logout";
 import Video from "./Video";
+import ThreeDotsHorizontal from "./ThreeDotsHorizontal";
 
 const icons = {
   home: Home,
@@ -39,6 +40,7 @@ const icons = {
   share: Share,
   user: User,
   video: Video,
+  threedotshorizontal: ThreeDotsHorizontal,
 };
 type IconProps = {
   name: keyof typeof icons;
