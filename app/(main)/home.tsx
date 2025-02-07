@@ -18,6 +18,8 @@ import { useRouter } from "expo-router";
 import Avatar from "@/components/Avatar";
 import { fetchPosts } from "@/services/postService";
 import PostCard from "@/components/PostCard";
+import Loading from "@/components/Loading";
+import { getUserData } from "@/services/userService";
 
 var limit = 0;
 const Home = () => {
@@ -27,22 +29,44 @@ const Home = () => {
   }
   const { user, setAuth } = authContext;
   const router = useRouter();
-
   const [posts, setPosts] = useState<{ id: number; [key: string]: any }[]>([]);
+  const [hasMore, setHasMore] = useState(true);
+
+  const handlePostEvent = async (payload) => {
+    if (payload.eventType == "INSERT" && payload?.new?.id) {
+      let newPost = { ...payload.new };
+      let res = await getUserData(newPost.userId);
+      newPost.user = res.success ? res.data : {};
+      setPosts((prevPosts) => [newPost, ...prevPosts]);
+    }
+  };
 
   useEffect(() => {
-    getPosts();
+    let postChannel = supabase
+      .channel("posts")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "posts" },
+        handlePostEvent
+      )
+      .subscribe();
+    // getPosts();
+
+    return () => {
+      supabase.removeChannel(postChannel);
+    };
   }, []);
 
   const getPosts = async () => {
     // call the api here
-    limit = limit + 10;
+    limit = limit + 4;
 
     console.log("fetching post: ", limit);
-    let res = await fetchPosts();
-    console.log("got posts result: ", res);
-    console.log("user: ", res.data[0].user);
+    let res = await fetchPosts(limit);
+    // console.log("got posts result: ", res);
+    // console.log("user: ", res.data[0].user);
     if (res.success) {
+      if (posts.length == res.data.length) setHasMore(false);
       setPosts(res.data);
     }
   };
@@ -97,6 +121,21 @@ const Home = () => {
           renderItem={({ item }) => (
             <PostCard item={item} currentUser={user} router={router} />
           )}
+          onEndReached={() => {
+            getPosts();
+            console.log("got to the end");
+          }}
+          ListFooterComponent={
+            hasMore ? (
+              <View style={{ marginVertical: posts.length == 0 ? 200 : 30 }}>
+                <Loading />
+              </View>
+            ) : (
+              <View style={{ marginVertical: 30 }}>
+                <Text style={styles.onPosts}>No more posts</Text>
+              </View>
+            )
+          }
         />
       </View>
       <Text>Home</Text>

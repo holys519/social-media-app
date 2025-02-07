@@ -1,14 +1,22 @@
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import React, { useState, useEffect } from "react";
+import {
+  Alert,
+  Image,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import React, { useState, useEffect, useMemo } from "react";
 import { theme } from "@/constants/theme";
 import { hp, wp } from "@/helpers/common";
 import Avatar from "./Avatar";
+import moment from "moment";
 import Icon from "@/assets/icons";
 import RenderHtml from "react-native-render-html";
 import { getSupabaseFileUrl } from "@/services/imageService";
-import { useVideoPlayer, VideoView, VideoPlayer } from "expo-video";
-import { Image } from "expo-image";
+import { useVideoPlayer, VideoView } from "expo-video";
 import { router } from "expo-router";
+import { createPostLike, removePostLike } from "@/services/postService";
 
 const textStyles = {
   color: theme.colors.dark,
@@ -27,7 +35,7 @@ const tagsStyles = {
 };
 
 const PostCard = ({ item, currentUser, router, hasShadow = true }) => {
-  console.log("post item: ", item);
+  // console.log("post item: ", item);
   const shadowStyles = {
     shadowOffset: {
       width: 0,
@@ -40,25 +48,55 @@ const PostCard = ({ item, currentUser, router, hasShadow = true }) => {
   const [videoSource, setVideoSource] = useState<string | null>(null);
 
   useEffect(() => {
-    if (item?.files && item?.file?.includes("postVideos")) {
-      setVideoSource(getSupabaseFileUrl(item?.file)?.uri || null); // nullチェックを追加
+    if (item?.file && item?.file.includes("postVideos")) {
+      setVideoSource(getSupabaseFileUrl(item?.file)?.uri || null);
     } else {
-      setVideoSource(null); // 動画がない場合はvideoSourceをnullに設定
+      setVideoSource(null);
     }
   }, [item]);
 
-  const player = useVideoPlayer(
-    {
-      uri: videoSource ?? "",
-    },
-    (player) => {
-      player.loop = true;
-      player.play();
-    }
-  );
-  console.log("uri取得できてるかな？", getSupabaseFileUrl(item?.file)?.uri);
+  const player = useVideoPlayer(videoSource, (player) => {
+    player.loop = true;
+    player.play();
+  });
+
+  const [likes, setLikes] = useState<{ userId: string; postId: string }[]>([]);
+  useEffect(() => {
+    setLikes(item?.postLikes || []);
+  }, [item?.postLikes]);
   const openPostDtails = () => {};
-  // const createAt = moment(item?.created_at).format("MMM D");
+
+  const onLike = async () => {
+    if (liked) {
+      // remove like
+      let res = await removePostLike(item?.id, currentUser?.id);
+      if (res.success) {
+        let updatedLikes = likes.filter(
+          (like) => like.userId != currentUser?.id
+        );
+        setLikes([...updatedLikes]);
+      } else {
+        Alert.alert("Post", "something went wrong!");
+      }
+    } else {
+      // createLike
+      let data = {
+        userId: currentUser?.id,
+        postId: item?.id,
+      };
+      let res = await createPostLike(data);
+      if (res.success) {
+        setLikes([...likes, data]);
+      } else {
+        Alert.alert("Post", "something went wrong!");
+      }
+    }
+  };
+  const liked = useMemo(() => {
+    return likes.some((like) => like.userId === currentUser?.id);
+  }, [likes, currentUser?.id]);
+  console.log("post item: ", item);
+  const createAt = moment(item?.created_at).format("MMM D");
   return (
     <View style={[styles.container, hasShadow && shadowStyles]}>
       <View style={styles.heander}>
@@ -70,7 +108,7 @@ const PostCard = ({ item, currentUser, router, hasShadow = true }) => {
           />
           <View style={{ gap: 2 }}>
             <Text style={styles.username}>{item?.user?.name}</Text>
-            <Text style={styles.postTime}>{item?.created_at}</Text>
+            <Text style={styles.postTime}>{createAt}</Text>
           </View>
         </View>
         <TouchableOpacity onPress={openPostDtails}>
@@ -96,26 +134,47 @@ const PostCard = ({ item, currentUser, router, hasShadow = true }) => {
         {item?.file && item?.file.includes("postImages") && (
           <Image
             source={{ uri: getSupabaseFileUrl(item?.file)?.uri || "" }}
-            transition={100}
             style={styles.postMedia}
-            // contentFit="cover"
+            resizeMode="cover"
           />
         )}
         {/* post Video */}
-        {item?.files && item?.file?.includes("postVideos") && (
-          // <Video
-          //   source={getSupabaseFileUrl(item?.file)}
-          //   transition={100}
-          //   style={[styles.postMedia, {height: hp(30)}]}
-          //   contentFit="cover"
-          // />
+        {item?.file && item?.file.includes("postVideos") && (
           <VideoView
-            style={{ flex: 1 }}
+            style={styles.postMedia}
             player={player}
             allowsFullscreen
             allowsPictureInPicture
+            nativeControls={true}
+            isTVSelectable
           />
         )}
+      </View>
+
+      {/* like &  */}
+      <View style={styles.footer}>
+        <View style={styles.footerButton}>
+          <TouchableOpacity onPress={onLike}>
+            <Icon
+              name="heart"
+              size={24}
+              fill={liked ? theme.colors.rose : "transparent"}
+              color={liked ? theme.colors.rose : theme.colors.textLight}
+            />
+          </TouchableOpacity>
+          <Text style={styles.count}>{likes?.length}</Text>
+        </View>
+        <View style={styles.footerButton}>
+          <TouchableOpacity>
+            <Icon name="comment" size={24} color={theme.colors.textLight} />
+          </TouchableOpacity>
+          <Text style={styles.count}>{0}</Text>
+        </View>
+        <View style={styles.footerButton}>
+          <TouchableOpacity>
+            <Icon name="share" size={24} color={theme.colors.textLight} />
+          </TouchableOpacity>
+        </View>
       </View>
     </View>
   );
@@ -127,7 +186,7 @@ const styles = StyleSheet.create({
   container: {
     gap: 10,
     marginBottom: 15,
-    borderRadius: Number(theme.radius.xxl) * 1.1,
+    borderRadius: Number(theme.radius.lg),
     borderCurve: "continuous",
     padding: 10,
     paddingVertical: 12,
@@ -159,7 +218,10 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   postMedia: {
-    borderRadius: 10,
+    height: hp(40),
+    width: "100%",
+    borderRadius: Number(theme.radius.xl),
+    borderCurve: "continuous",
   },
   postBody: {
     marginLeft: 5,

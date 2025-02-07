@@ -19,6 +19,7 @@ import User from "./User";
 import Logout from "./logout";
 import Video from "./Video";
 import ThreeDotsHorizontal from "./ThreeDotsHorizontal";
+import Comment from "./Comment";
 
 const icons = {
   home: Home,
@@ -41,6 +42,7 @@ const icons = {
   user: User,
   video: Video,
   threedotshorizontal: ThreeDotsHorizontal,
+  comment: Comment,
 };
 type IconProps = {
   name: keyof typeof icons;
