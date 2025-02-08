@@ -12,6 +12,14 @@ export const getUserImageSrc = (imagePath: string) => {
   }
 };
 
+export const downloadFile = async (uri) => {
+  try {
+    const { uri } = FileSystem.downloadAsync(uri, getFilePath(uri));
+  } catch (error) {
+    return null;
+  }
+};
+
 export const getSupabaseFileUrl = (filePath: string) => {
   if (filePath) {
     return {
