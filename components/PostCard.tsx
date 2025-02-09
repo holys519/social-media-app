@@ -42,6 +42,10 @@ interface PostCardProps {
   router: any;
   hasShadow?: boolean;
   showMoreIcon?: boolean;
+
+  showDelete?: boolean;
+  onDelete?: () => void;
+  onEdit?: () => void;
 }
 
 const PostCard: React.FC<PostCardProps> = ({
@@ -50,6 +54,9 @@ const PostCard: React.FC<PostCardProps> = ({
   router,
   hasShadow = true,
   showMoreIcon = true,
+  showDelete = false,
+  onDelete = () => {},
+  onEdit = () => {},
 }) => {
   // console.log("post item: ", item);
   const shadowStyles = {
@@ -71,6 +78,14 @@ const PostCard: React.FC<PostCardProps> = ({
     }
   }, [item]);
 
+  const [commentsCount, setCommentsCount] = useState(
+    item?.comments?.length ?? 0
+  );
+
+  useEffect(() => {
+    setCommentsCount(item?.comments?.length ?? 0);
+  }, [item?.comments]);
+
   const player = useVideoPlayer(videoSource, (player) => {
     player.loop = true;
     player.play();
@@ -78,14 +93,16 @@ const PostCard: React.FC<PostCardProps> = ({
 
   const [likes, setLikes] = useState<{ userId: string; postId: string }[]>([]);
   const [loading, setLoading] = useState(false);
+
   useEffect(() => {
     setLikes(item?.postLikes || []);
   }, [item?.postLikes]);
-  const openPostDtails = () => {
-    if (showMoreIcon) return null;
+
+  const openPostDetails = () => {
+    if (!showMoreIcon) return null;
     router.push({
-      pathname: "postDetails",
-      params: { postId: item?.id },
+      pathname: "/postDetails",
+      params: { postId: String(item?.id) },
     });
   };
 
@@ -121,17 +138,23 @@ const PostCard: React.FC<PostCardProps> = ({
   console.log("post item: ", item);
 
   const onShare = async () => {
-    let content = { message: stripHtmlTags(item?.body) };
+    let content: { message: string; url?: string } = {
+      message: stripHtmlTags(item?.body),
+    };
     if (item?.file) {
       // download then share the local uri
       setLoading(true);
       let url = await downloadFile(getSupabaseFileUrl(item?.file)?.uri);
       setLoading(false);
-      content.url = url;
+      if (url) {
+        content.url = url;
+      }
     }
     Share.share(content);
   };
   const createAt = moment(item?.created_at).format("MMM D");
+
+  // console.log("post item: ", item?.comments);
 
   return (
     <View style={[styles.container, hasShadow && shadowStyles]}>
@@ -149,7 +172,7 @@ const PostCard: React.FC<PostCardProps> = ({
         </View>
 
         {showMoreIcon && (
-          <TouchableOpacity onPress={openPostDtails}>
+          <TouchableOpacity onPress={openPostDetails}>
             <Icon
               name="threedotshorizontal"
               size={hp(3.4)}
@@ -157,6 +180,27 @@ const PostCard: React.FC<PostCardProps> = ({
               color={theme.colors.text}
             />
           </TouchableOpacity>
+        )}
+
+        {showDelete && currentUser.id == item?.userId && (
+          <View style={styles.actions}>
+            <TouchableOpacity onPress={onEdit}>
+              <Icon
+                name="edit"
+                size={hp(3.4)}
+                strokeWidth={3}
+                color={theme.colors.text}
+              />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={onDelete}>
+              <Icon
+                name="delete"
+                size={hp(3.4)}
+                strokeWidth={3}
+                color={theme.colors.rose}
+              />
+            </TouchableOpacity>
+          </View>
         )}
       </View>
       <View style={styles.content}>
@@ -205,10 +249,10 @@ const PostCard: React.FC<PostCardProps> = ({
         </View>
 
         <View style={styles.footerButton}>
-          <TouchableOpacity onPress={openPostDtails}>
+          <TouchableOpacity onPress={openPostDetails}>
             <Icon name="comment" size={24} color={theme.colors.textLight} />
           </TouchableOpacity>
-          <Text style={styles.count}>{0}</Text>
+          <Text style={styles.count}>{commentsCount}</Text>
         </View>
         <View style={styles.footerButton}>
           {loading ? (

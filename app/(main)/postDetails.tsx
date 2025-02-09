@@ -8,7 +8,11 @@ import {
 } from "react-native";
 import React, { useEffect, useRef, useState } from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { createComment, fetchPostDetails } from "@/services/postService";
+import {
+  createComment,
+  fetchPostDetails,
+  removeComment,
+} from "@/services/postService";
 import { hp, wp } from "@/helpers/common";
 import { theme } from "@/constants/theme";
 import PostCard from "@/components/PostCard";
@@ -16,35 +20,84 @@ import { useAuth } from "@/contexts/AuthContext";
 import Loading from "@/components/Loading";
 import Input from "@/components/Input";
 import Icon from "@/assets/icons";
+import CommentItem from "@/components/CommentItem";
+import { Filter } from "react-native-svg";
+import { supabase } from "@/lib/supabase";
+import { getUserData } from "@/services/userService";
 
 const PostDetails = () => {
   const { postId } = useLocalSearchParams();
-  const postIdString = Array.isArray(postId) ? postId[0] : postId;
+  // const postId = Array.isArray(postId) ? postId[0] : postId;
   const { user } = useAuth();
   const router = useRouter();
   const [startLoading, setStartLoading] = useState(true);
   const inputRef = useRef(null);
   const commentRef = useRef("");
   const [loading, setLoading] = useState(false);
-  const [post, setPost] = useState(null);
+  const [post, setPost] = useState<{
+    id: string;
+    comments: { id: string }[];
+  } | null>(null);
 
+  const handleNewComment = async (payload) => {
+    console.log("get new comment", payload.new);
+    if (payload.new) {
+      let onNewComment = { ...payload.new };
+      let res = await getUserData(onNewComment.userId);
+      onNewComment.user = res.success ? res.data : {};
+      setPost((prevPost) => {
+        return {
+          ...prevPost,
+          comments: [newComment, ...prevPost.comments],
+        };
+      });
+    }
+  };
   useEffect(() => {
+    let commentChannel = supabase
+      .channel("comments")
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "comments",
+          filter: `postId=eq.${postId}`,
+        },
+        handleNewComment
+      )
+      .subscribe();
     getPostDetails();
-  });
+
+    return () => {
+      supabase.removeChannel(commentChannel);
+    };
+  }, []);
 
   const getPostDetails = async () => {
-    let res = await fetchPostDetails(postIdString);
-    if (res.success) setPost(res.data);
+    if (!postId) {
+      console.log("postId is invalid:", postId);
+      return;
+    }
+
+    let res = await fetchPostDetails(postId);
+    if (res.success) {
+      setPost({
+        ...res.data,
+        comments: res.data.comments ?? [], // コメントがない場合は空配列
+      });
+    } else {
+      Alert.alert("Error", res.msg);
+    }
     setStartLoading(false);
   };
 
   const onNewComment = async () => {
-    console.log("onNewComment called");
-    if (!commentRef.current) return null;
+    if (!commentRef.current) return;
     let data = {
       userId: user?.id,
-      postId: post?.id as string,
-      content: commentRef.current,
+      postId: post?.id,
+      text: commentRef.current,
     };
 
     setLoading(true);
@@ -53,9 +106,33 @@ const PostDetails = () => {
     if (res.success) {
       inputRef?.current?.clear();
       commentRef.current = "";
+      getPostDetails(); // コメントを即時更新
     } else {
       Alert.alert("Comment", res.msg);
     }
+  };
+
+  const onDeleteComment = async (comment) => {
+    console.log("deleteing comment: ", comment);
+    let res = await removeComment(comment?.id);
+    if (res.success) {
+      setPost((prevPost) => {
+        if (!prevPost) return prevPost;
+        let updatedPost = { ...prevPost };
+        updatedPost.comments =
+          updatedPost.comments?.filter((c) => c.id != comment.id) ?? [];
+        return updatedPost;
+      });
+    } else {
+      Alert.alert("Comment", res.msg);
+    }
+  };
+
+  const onDeletePost = async () => {
+    console.log("delete post: ", item);
+  };
+  const onEditPost = async () => {
+    console.log("edit post: ", item);
   };
 
   if (startLoading) {
@@ -65,18 +142,35 @@ const PostDetails = () => {
       </View>
     );
   }
+  if (!post) {
+    return (
+      <View
+        style={[
+          styles.center,
+          { justifyContent: "flex-start", marginTop: 100 },
+        ]}
+      >
+        <Text style={styles.notFound}>Post not Found!</Text>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       <ScrollView
-        showsVerticalScrollIndicator={true}
+        showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.list}
       >
         <PostCard
-          item={post}
+          item={{ ...post, comments: [{ count: post?.comments?.length }] }}
+          // item={post}
           currentUser={user}
           router={router}
           hasShadow={false}
           showMoreIcon={false}
+          showDelete={true}
+          onDelete={onDeletePost}
+          onEdit={onEditPost}
         />
 
         {/* comment input */}
@@ -93,13 +187,30 @@ const PostDetails = () => {
             }}
           />
           {loading ? (
-            <View>
-              <Loading />
+            <View style={styles.loading}>
+              <Loading size="small" />
             </View>
           ) : (
             <TouchableOpacity style={styles.sendIcon} onPress={onNewComment}>
               <Icon name="send" color={theme.colors.primaryDark} />
             </TouchableOpacity>
+          )}
+        </View>
+
+        {/* comment list */}
+        <View style={{ marginVertical: 15, gap: 17 }}>
+          {post?.comments?.map((comment) => (
+            <CommentItem
+              key={String(comment?.id)}
+              item={comment}
+              onDelete={onDeleteComment}
+              canDetele={user.id == comment.userId || user.id == post.userId}
+            />
+          ))}
+          {post?.comments?.length === 0 && (
+            <Text style={{ color: theme.colors.text, marginLeft: 5 }}>
+              Be first to comment!
+            </Text>
           )}
         </View>
       </ScrollView>
