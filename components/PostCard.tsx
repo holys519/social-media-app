@@ -36,7 +36,15 @@ const tagsStyles = {
   },
 };
 
-const PostCard = ({
+interface PostCardProps {
+  item: any;
+  currentUser: { id: string; name: string; image: string };
+  router: any;
+  hasShadow?: boolean;
+  showMoreIcon?: boolean;
+}
+
+const PostCard: React.FC<PostCardProps> = ({
   item,
   currentUser,
   router,
@@ -75,7 +83,10 @@ const PostCard = ({
   }, [item?.postLikes]);
   const openPostDtails = () => {
     if (showMoreIcon) return null;
-    router.push({ pathname: "./postDetails", params: { postId: item?.id } });
+    router.push({
+      pathname: "postDetails",
+      params: { postId: item?.id },
+    });
   };
 
   const onLike = async () => {

@@ -55,7 +55,7 @@ export const fetchPosts = async (limit = 10) => {
     return { success: false, msg: "Could not fetch the posts" };
   }
 };
-export const fetchPostDetails = async (postId) => {
+export const fetchPostDetails = async (postId: string) => {
   try {
     const { data, error } = await supabase
       .from("posts")
@@ -118,6 +118,30 @@ export const removePostLike = async (postId: string, userId: string) => {
     }
 
     return { success: true };
+  } catch (error) {
+    console.log("postLike error: ", error);
+    return { success: false, msg: "Could not like the posts" };
+  }
+};
+
+export const createComment = async (comment: {
+  postId: string;
+  userId: string;
+  content: string;
+}) => {
+  try {
+    const { data, error } = await supabase
+      .from("comments")
+      .insert(comment)
+      .select()
+      .single();
+
+    if (error) {
+      console.log("postLike error: ", error);
+      return { success: false, msg: "Could not like the posts" };
+    }
+
+    return { success: true, data: data };
   } catch (error) {
     console.log("postLike error: ", error);
     return { success: false, msg: "Could not like the posts" };

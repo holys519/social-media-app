@@ -1,4 +1,5 @@
 import {
+  Alert,
   ScrollView,
   StyleSheet,
   Text,
@@ -7,7 +8,7 @@ import {
 } from "react-native";
 import React, { useEffect, useRef, useState } from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { fetchPostDetails } from "@/services/postService";
+import { createComment, fetchPostDetails } from "@/services/postService";
 import { hp, wp } from "@/helpers/common";
 import { theme } from "@/constants/theme";
 import PostCard from "@/components/PostCard";
@@ -18,6 +19,7 @@ import Icon from "@/assets/icons";
 
 const PostDetails = () => {
   const { postId } = useLocalSearchParams();
+  const postIdString = Array.isArray(postId) ? postId[0] : postId;
   const { user } = useAuth();
   const router = useRouter();
   const [startLoading, setStartLoading] = useState(true);
@@ -31,13 +33,30 @@ const PostDetails = () => {
   });
 
   const getPostDetails = async () => {
-    // fatch post details here
-    let res = await fetchPostDetails(postId);
+    let res = await fetchPostDetails(postIdString);
     if (res.success) setPost(res.data);
     setStartLoading(false);
   };
 
-  const onNewComment = async () => {};
+  const onNewComment = async () => {
+    console.log("onNewComment called");
+    if (!commentRef.current) return null;
+    let data = {
+      userId: user?.id,
+      postId: post?.id as string,
+      content: commentRef.current,
+    };
+
+    setLoading(true);
+    let res = await createComment(data);
+    setLoading(false);
+    if (res.success) {
+      inputRef?.current?.clear();
+      commentRef.current = "";
+    } else {
+      Alert.alert("Comment", res.msg);
+    }
+  };
 
   if (startLoading) {
     return (

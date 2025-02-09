@@ -53,7 +53,7 @@ const MainLayout = () => {
       }}
     >
       <Stack.Screen
-        name="(main)/postDetails"
+        name="./(main)/postDetails"
         options={{ presentation: "modal" }}
       />
     </Stack>

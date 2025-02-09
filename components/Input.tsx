@@ -1,27 +1,39 @@
-import { StyleSheet, Text, TextInput, View } from "react-native";
-import React from "react";
+import { StyleSheet, TextInput, View, TextInputProps } from "react-native";
+import React, { useImperativeHandle, useRef } from "react"; // Import useImperativeHandle and useRef
 import { theme } from "@/constants/theme";
-import { hp, wp } from "@/helpers/common";
+import { hp } from "@/helpers/common";
 
-import { TextInputProps } from "react-native";
+interface InputRef {
+  clear: () => void;
+  focus: () => void; // Add focus if needed
+}
 
 interface InputProps extends TextInputProps {
   containerStyle?: object;
-  inputRef?: React.RefObject<TextInput>;
+  inputRef?: React.RefObject<InputRef>;
   icon?: React.ReactNode;
 }
 
-const Input = (props: InputProps) => {
-  // const { icon, containerStyle, inputRef, ...rest } = props;
+const Input = ({ inputRef, icon, containerStyle, ...props }: InputProps) => {
+  const textInputRef = useRef<TextInput>(null); // Ref to the actual TextInput
+
+  useImperativeHandle(inputRef, () => ({
+    clear: () => {
+      textInputRef.current?.clear();
+    },
+    focus: () => {
+      // Expose focus if needed
+      textInputRef.current?.focus();
+    },
+  }));
+
   return (
-    <View
-      style={[styles.container, props.containerStyle && props.containerStyle]}
-    >
-      {props.icon && props.icon}
+    <View style={[styles.container, containerStyle]}>
+      {icon && icon}
       <TextInput
         style={{ flex: 1 }}
         placeholderTextColor={theme.colors.textLight}
-        ref={props.inputRef && props.inputRef}
+        ref={textInputRef} // Assign the internal ref here
         {...props}
       />
     </View>
