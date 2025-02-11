@@ -154,6 +154,20 @@ const PostCard: React.FC<PostCardProps> = ({
   };
   const createAt = moment(item?.created_at).format("MMM D");
 
+  const handlePostDelete = () => {
+    Alert.alert("Confirm", "Are you sure you want to do this", [
+      {
+        text: "Cancel",
+        onPress: () => console.log("model cancelled"),
+        style: "cancel",
+      },
+      {
+        text: "Delete",
+        onPress: () => onDelete(item),
+        style: "destructive",
+      },
+    ]);
+  };
   // console.log("post item: ", item?.comments);
 
   return (
