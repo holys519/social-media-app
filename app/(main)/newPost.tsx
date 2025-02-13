@@ -8,7 +8,7 @@ import {
   View,
   Alert,
 } from "react-native";
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import ScreenWrapper from "@/components/ScreenWrapper";
 import Header from "@/components/Header";
 import { hp, wp } from "@/helpers/common";
@@ -16,7 +16,7 @@ import { theme } from "@/constants/theme";
 import Avatar from "@/components/Avatar";
 import { useAuth } from "@/contexts/AuthContext";
 import RichTextEditor from "../../components/RichTextEditor";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import Icon from "@/assets/icons";
 import Button from "@/components/Button";
 import * as ImagePicker from "expo-image-picker";
@@ -26,6 +26,8 @@ import { useVideoPlayer, VideoView, VideoPlayer } from "expo-video";
 import * as FileSystem from "expo-file-system";
 
 const NewPost = () => {
+  const post = useLocalSearchParams();
+  console.log("post: ", post);
   const authContext = useAuth();
   const user = authContext ? authContext.user : null;
   const bodyRef = useRef("");
@@ -45,6 +47,36 @@ const NewPost = () => {
       player.play();
     }
   );
+
+  useEffect(() => {
+    if (post && post.id) {
+      bodyRef.current = Array.isArray(post.body)
+        ? post.body.join(" ")
+        : post.body;
+      if (post.file) {
+        // 1) まず「オブジェクトのパターン」かどうか
+        if (typeof post.file === "object" && !Array.isArray(post.file)) {
+          setFile(post.file);
+        }
+        // 2) 「文字列パス」の場合はそのまま格納して後で判定
+        else if (typeof post.file === "string") {
+          setFile(post.file);
+        } else {
+          setFile(null);
+        }
+      } else {
+        setFile(null);
+      }
+      // そもそも post.body が存在しているかどうか?
+      const content = Array.isArray(post.body)
+        ? post.body.join(" ")
+        : post.body;
+      setTimeout(() => {
+        editorRef?.current?.setContentHTML(content); // content が "" になっている可能性
+      }, 300);
+    }
+  }, [post]);
+
   const onPick = async (isImage: boolean) => {
     let mediaConfig: ImagePicker.ImagePickerOptions = {
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -89,13 +121,16 @@ const NewPost = () => {
 
   const getFileUri = (file: any) => {
     if (!file) return null;
+
+    // ローカルファイルかどうか
     if (isLocalFile(file)) {
       return file.uri;
     }
 
+    // 文字列パスなら
     const remoteUri = getSupabaseFileUrl(file)?.uri;
-    console.log("remote uri: ", remoteUri);
-    return remoteUri && remoteUri.endsWith(".mp4") ? remoteUri : null;
+    // 動画かどうかはファイル名（拡張子）で判定している
+    return remoteUri; // ここで適切に返せばOK
   };
 
   const onSubmit = async () => {
@@ -109,6 +144,8 @@ const NewPost = () => {
       body: bodyRef.current,
       userId: user?.id,
     };
+    if (post && post.id) data.id = post.id;
+
     setLoading(true);
     console.log("submit data.file: ", data.file);
 
@@ -193,7 +230,7 @@ const NewPost = () => {
         </ScrollView>
         <Button
           buttonStyle={{ height: hp(6.2) }}
-          title="Post"
+          title={post && post.id ? "Update" : "Post"}
           loading={loading}
           hasShadow={false}
           onPress={onSubmit}

@@ -198,7 +198,7 @@ const PostCard: React.FC<PostCardProps> = ({
 
         {showDelete && currentUser.id == item?.userId && (
           <View style={styles.actions}>
-            <TouchableOpacity onPress={onEdit}>
+            <TouchableOpacity onPress={() => onEdit(item)}>
               <Icon
                 name="edit"
                 size={hp(3.4)}

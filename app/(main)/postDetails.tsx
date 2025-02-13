@@ -12,6 +12,7 @@ import {
   createComment,
   fetchPostDetails,
   removeComment,
+  removePost,
 } from "@/services/postService";
 import { hp, wp } from "@/helpers/common";
 import { theme } from "@/constants/theme";
@@ -128,11 +129,19 @@ const PostDetails = () => {
     }
   };
 
-  const onDeletePost = async () => {
-    console.log("delete post: ", item);
+  const onDeletePost = async (item) => {
+    let res = await removePost(post.id);
+    if (res.success) {
+      router.back();
+    } else {
+      Alert.alert("Post", res.msg);
+    }
   };
-  const onEditPost = async () => {
-    console.log("edit post: ", item);
+
+  const onEditPost = async (item) => {
+    console.log("post Item2: ", item);
+    // router.back();
+    router.push({ pathname: "./newPost", params: { ...item } });
   };
 
   if (startLoading) {
