@@ -158,8 +158,6 @@ const Home = () => {
           }
         />
       </View>
-      <Text>Home</Text>
-      <Button title="login" onPress={onLogout} />
     </ScreenWrapper>
   );
 };

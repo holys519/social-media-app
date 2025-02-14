@@ -10,11 +10,13 @@ import { theme } from "@/constants/theme";
 interface RichTextEditorProps {
   editorRef: React.RefObject<any>;
   onChange: (text: string) => void;
+  initialContentHTML?: string;
 }
 
 const RichTextEditor: React.FC<RichTextEditorProps> = ({
   editorRef,
   onChange,
+  initialContentHTML,
 }) => {
   return (
     <View style={{ minHeight: 285 }}>
@@ -54,6 +56,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
         editorStyle={styles.contentStyle}
         placeholder={"what's on your mnd"}
         onChange={onChange}
+        initialContentHTML={initialContentHTML}
       />
     </View>
   );

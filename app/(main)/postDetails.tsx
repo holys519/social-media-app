@@ -141,7 +141,7 @@ const PostDetails = () => {
   const onEditPost = async (item) => {
     console.log("post Item2: ", item);
     // router.back();
-    router.push({ pathname: "./newPost", params: { ...item } });
+    router.replace({ pathname: "/newPost", params: { ...item } });
   };
 
   if (startLoading) {
