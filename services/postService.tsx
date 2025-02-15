@@ -30,26 +30,48 @@ export const createOrUpdatePost = async (post: any) => {
   }
 };
 
-export const fetchPosts = async (limit = 10) => {
+export const fetchPosts = async (limit = 10, userId: string) => {
   try {
-    const { data, error } = await supabase
-      .from("posts")
-      .select(
-        `
+    if (userId) {
+      const { data, error } = await supabase
+        .from("posts")
+        .select(
+          `
         *,
         user: users (id, name, image),
         postLikes (*)
         `
-      )
-      .order("created_at", { ascending: false })
-      .limit(limit);
+        )
+        .order("created_at", { ascending: false })
+        .eq("userId", userId)
+        .limit(limit);
 
-    if (error) {
-      console.log("fetchPosts error: ", error);
-      return { success: false, msg: "Could not fetch the posts" };
+      if (error) {
+        console.log("fetchPosts error: ", error);
+        return { success: false, msg: "Could not fetch the posts" };
+      }
+
+      return { success: true, data: data };
+    } else {
+      const { data, error } = await supabase
+        .from("posts")
+        .select(
+          `
+    *,
+    user: users (id, name, image),
+    postLikes (*)
+    `
+        )
+        .order("created_at", { ascending: false })
+        .limit(limit);
+
+      if (error) {
+        console.log("fetchPosts error: ", error);
+        return { success: false, msg: "Could not fetch the posts" };
+      }
+
+      return { success: true, data: data };
     }
-
-    return { success: true, data: data };
   } catch (error) {
     console.log("fetchPosts error: ", error);
     return { success: false, msg: "Could not fetch the posts" };
