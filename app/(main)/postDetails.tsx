@@ -25,6 +25,7 @@ import CommentItem from "@/components/CommentItem";
 import { Filter } from "react-native-svg";
 import { supabase } from "@/lib/supabase";
 import { getUserData } from "@/services/userService";
+import { createNotification } from "@/services/notificationService";
 
 const PostDetails = () => {
   const { postId } = useLocalSearchParams();
@@ -105,6 +106,15 @@ const PostDetails = () => {
     let res = await createComment(data);
     setLoading(false);
     if (res.success) {
+      if (user.id != post.userId) {
+        let notifi = {
+          senderId: user.id,
+          receiver: post.userId,
+          title: "commented on your post",
+          data: JSON.stringify({ postId: post.id, commentId: res?.data?.id }),
+        };
+        createNotification(notify);
+      }
       inputRef?.current?.clear();
       commentRef.current = "";
       getPostDetails(); // コメントを即時更新
