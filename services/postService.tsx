@@ -78,25 +78,30 @@ export const fetchPosts = async (limit = 10, userId: string) => {
   }
 };
 export const fetchPostDetails = async (postId: string) => {
-  const { data, error } = await supabase
-    .from("posts")
-    .select(
-      `
-      *,
-      user: users (id, name, image),
-      postLikes (*),
-      comments (*, user: users(id, name, image))
-      ` // comments のリレーション名を明示
-    )
-    .eq("id", postId)
-    .single();
+  try {
+    const { data, error } = await supabase
+      .from("posts")
+      .select(
+        `
+        *,
+        user: users (id, name, image),
+        postLikes (*),
+        comments (*, user: users(id, name, image))
+        ` // comments のリレーション名を明示
+      )
+      .eq("id", postId)
+      .single();
 
-  if (error) {
+    if (error) {
+      console.log("fetchPostDetails error: ", error);
+      return { success: false, msg: "Could not fetch the post details" };
+    }
+
+    return { success: true, data: { ...data, comments: data.comments ?? [] } }; // コメントがない場合、空配列を返す
+  } catch (error) {
     console.log("fetchPostDetails error: ", error);
-    return { success: false, msg: "Could not fetch the post details" };
+    return { success: true, msg: "Could not fetch the post" };
   }
-
-  return { success: true, data: { ...data, comments: data.comments ?? [] } }; // コメントがない場合、空配列を返す
 };
 
 export const createPostLike = async (postLike: {
